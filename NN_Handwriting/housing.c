@@ -82,14 +82,15 @@ void backward(NeuralNetwork *nn, double *input, double *hidden_output, double ou
     nn->bias_output[0] += LEARNING_RATE * output_gradient;  // Update bias
 
     // Propagate error back to the hidden layer
-    double hidden_error[NUM_NEURONS];
+    double neuron_error[NUM_NEURONS];
     for (int i = 0; i < NUM_NEURONS; i++) {
-        hidden_error[i] = output_gradient * nn->weights_hidden_output[i][0];
+        neuron_error[i] = output_gradient * nn->weights_hidden_output[i][0];
     }
 
     // Gradient for the hidden layer
     for (int i = 0; i < NUM_NEURONS; i++) {
-        double hidden_gradient = hidden_error[i] * leaky_relu_derivative(hidden_output[i]);  // Use Leaky ReLU derivative
+        // Essentially undoes the operation done in the forward direction
+        double hidden_gradient = neuron_error[i] * leaky_relu_derivative(hidden_output[i]);  // Use Leaky ReLU derivative
         hidden_gradient = fmax(fmin(hidden_gradient, 1), -1);
 
         // Update weights and biases for hidden layer
@@ -102,16 +103,16 @@ void backward(NeuralNetwork *nn, double *input, double *hidden_output, double ou
 
 // Training the neural network
 void train(NeuralNetwork *nn, double data[][INPUT_SIZE], double targets[], int num_samples) {
-    double hidden_output[NUM_NEURONS]; // Array of the neurons (in this there are 5)
+    double neuron_val[NUM_NEURONS]; // Array of the neurons (in this there are 5)
     double output; // Single variable representing the outputted price
 
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
         //double total_loss = 0.0;
 
         for (int i = 0; i < num_samples; i++) {
-            forward(nn, data[i], hidden_output, &output); // Changes the output to the current predicted price for the data given
+            forward(nn, data[i], neuron_val, &output); // Changes the output to the current predicted price for the data given
             //total_loss += (targets[i] - output)*(targets[i] - output);  // Calculates the error for this epoch using Mean Squared (MSE)
-            backward(nn, data[i], hidden_output, output, targets[i]); // Passes the data of i, neurons, output, and the target price of i
+            backward(nn, data[i], neuron_val, output, targets[i]); // Passes the data of i, neurons, output, and the target price of i
         }
     }
 }
